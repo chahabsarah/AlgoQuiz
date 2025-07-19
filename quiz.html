@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Algorithmique Interactif</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 6s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #f0f8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .progress-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            padding: 5px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .quiz-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .quiz-card.active {
+            display: block;
+        }
+
+        .quiz-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f8ff;
+        }
+
+        .quiz-number {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 20px;
+        }
+
+        .quiz-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            flex-grow: 1;
+        }
+
+        .algo-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            line-height: 1.8;
+            position: relative;
+        }
+
+        .algo-container::before {
+            content: '</>';
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .dropzone {
+            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+            border: 2px dashed #9c27b0;
+            padding: 15px;
+            margin: 8px 0;
+            min-height: 50px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .dropzone:hover {
+            background: linear-gradient(135deg, #bbdefb, #e1bee7);
+            border-color: #673ab7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(156, 39, 176, 0.2);
+        }
+
+        .dropzone.filled {
+            background: linear-gradient(135deg, #c8e6c9, #dcedc8);
+            border-color: #4caf50;
+            border-style: solid;
+        }
+
+        .drag-container {
+            margin: 30px 0;
+        }
+
+        .drag-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .drag-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .draggable {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: grab;
+            user-select: none;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .draggable:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+
+        .draggable.used {
+            opacity: 0.5;
+            pointer-events: none;
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+
+        .check-button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .check-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .check-button:hover::before {
+            left: 100%;
+        }
+
+        .check-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(52, 152, 219, 0.4);
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            animation: bounce 0.6s ease-out;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translate3d(0,0,0);
+            }
+            40%, 43% {
+                transform: translate3d(0,-30px,0);
+            }
+            70% {
+                transform: translate3d(0,-15px,0);
+            }
+            90% {
+                transform: translate3d(0,-4px,0);
+            }
+        }
+
+        .result.success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .result.error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        .final-screen {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            display: none;
+            animation: zoomIn 0.8s ease-out;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .final-screen h2 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+
+        .celebration-emoji {
+            font-size: 4rem;
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .drag-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .quiz-card {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .algo-container {
+                font-size: 14px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-brain"></i> Quiz Algorithmique</h1>
+            <p class="subtitle">Maîtrise les algorithmes étape par étape !</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div id="quiz-container"></div>
+
+        <div id="final" class="final-screen">
+            <div class="celebration-emoji">🎉</div>
+            <h2>Félicitations !</h2>
+            <p>Tu as terminé le quiz avec succès</p>
+            <div class="score-display" id="scoreDisplay"></div>
+            <p>Continue à pratiquer pour devenir un expert en algorithmes !</p>
+        </div>
+    </div>
+
+    <script>
+        const quizzes = [
+            {
+                id: 1,
+                title: "Préparer une salade",
+                correctSteps: [
+                    "Ecrire('Laver les légumes')",
+                    "Ecrire('Couper les légumes')",
+                    "Ecrire('Ajouter l'assaisonneme')",
+                    "Ecrire('Mélanger le tout')"
+                ],
+                availableSteps: [
+                    "Ecrire('Couper les légumes')",
+                    "Ecrire('Ajouter l'assaisonneme')",
+                    "Ecrire('Laver les légumes')",
+                    "Ecrire('Mélanger le tout')"
+                ]
+            },
+            {
+                id: 2,
+                title: "Brosser les dents",
+                correctSteps: [
+                    "Ecrire('Prendre la brosse à dents')",
+                    "Ecrire('Mettre du dentifrice')",
+                    "Ecrire('Se brosser les dents')",
+                    "Ecrire('Se rincer la bouche')"
+                ],
+                availableSteps: [
+                    "Ecrire('Prendre la brosse à dents')",
+                    "Ecrire('Mettre du dentifrice')",
+                    "Ecrire('Se brosser les dents')",
+                    "Ecrire('Se rincer la bouche')"
+                ]
+            },
+            {
+                id: 3,
+                title: "Faire pousser une plante",
+                correctSteps: [
+                    "Ecrire('Planter une graine')",
+                    "Ecrire('Arroser régulièrement')",
+                    "Ecrire('Exposer au soleil')",
+                    "Ecrire('Observer la croissance')"
+                ],
+                availableSteps: [
+                    "Ecrire('Observer la croissance')",
+                    "Ecrire('Arroser régulièrement')",
+                    "Ecrire('Exposer au soleil')",
+                    "Ecrire('Planter une graine')"
+                ]
+            },
+            {
+                id: 4,
+                title: "Convertir des minutes en secondes",
+                correctSteps: [
+                    "lire(n1)",
+                    "n2 ← n1 * 60",
+                    "Ecrire(n2)"
+                ],
+                availableSteps: [
+                    "Ecrire(n2)",
+                    "n2 ← n1 * 60",
+                    "lire(n1)",
+                    "Ecrire(angleB)"
+                ]
+            },
+            {
+                id: 5,
+                title: "Calcul de la surface d'un triangle",
+                correctSteps: [
+                    ["lire(hauteur)", "lire(base)"],
+                    ["lire(hauteur)", "lire(base)"],
+                    "surface ← hauteur * base / 2",
+                    "Ecrire(surface)"
+                ],
+                availableSteps: [
+                    "lire(hauteur)",
+                    "lire(base)",
+                    "surface ← hauteur * base / 2",
+                    "Ecrire(surface)",
+                    "lire(angleA)"
+                ]
+            },
+            {
+                id: 6,
+                title: "Calculer la vitesse",
+                correctSteps: [
+                    ["lire(temps)", "lire(distance)"],
+                    ["lire(distance)", "lire(temps)"],
+                    "vitesse ← distance / temps",
+                    "Ecrire(vitesse)"
+                ],
+                availableSteps: [
+                    "lire(distance)",
+                    "lire(temps)",
+                    "vitesse ← distance / temps",
+                    "Ecrire(vitesse)"
+                ]
+            },
+            {
+                id: 7,
+                title: "Angle d'un triangle isocèle",
+                correctSteps: [
+                    "lire(angleA)",
+                    "angleB ← (180 - angleA) / 2",
+                    "Ecrire(angleB)"
+                ],
+                availableSteps: [
+                    "Ecrire(angleB)",
+                    "angleB ← (180 - angleA) / 2",
+                    "lire(angleA)"
+                ]
+            },
+            {
+                id: 8,
+                title: "Former un entier abH",
+                correctSteps: [
+                    ["lire(n1)", "lire(h)"],
+                    ["lire(h)", "lire(n1)"],
+                    "n2 ← n1 * 10 + h",
+                    "Ecrire(n2)"
+                ],
+                availableSteps: [
+                    "lire(n1)",
+                    "lire(h)",
+                    "n2 ← n1 * 10 + h",
+                    "Ecrire(n2)"
+                ]
+            },
+            {
+                id: 9,
+                title: "Moyenne annuelle pondérée",
+                correctSteps: [
+                    "lire(note1)",
+                    "lire(note2)",
+                    "lire(note3)",
+                    "moyenne ← (note1 + 2 * note2 + 2 * note3) / 5",
+                    "Ecrire(moyenne)"
+                ],
+                availableSteps: [
+                    "lire(note1)",
+                    "lire(note2)",
+                    "lire(note3)",
+                    "moyenne ← (note1 + 2 * note2 + 2 * note3) / 5",
+                    "Ecrire(moyenne)"
+                ]
+            }
+        ];
+
+        let score = 0;
+        let currentQuiz = 0;
+
+        // Create animated particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 6) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuiz) / quizzes.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function createQuiz(quiz) {
+            const container = document.createElement("div");
+            container.id = `quiz${quiz.id}`;
+            container.className = `quiz-card ${quiz.id === 1 ? 'active' : ''}`;
+
+            const shuffledSteps = [...quiz.availableSteps].sort(() => 0.5 - Math.random());
+
+            container.innerHTML = `
+                <div class="quiz-header">
+                    <div class="quiz-number">${quiz.id}</div>
+                    <h2 class="quiz-title">${quiz.title}</h2>
+                </div>
+                <div class="algo-container">
+                    <strong>Algorithme ex${quiz.id}</strong><br>
+                    <strong>Début</strong><br>
+                    ${quiz.correctSteps.map((_, i) => 
+                        `  <div class="dropzone" data-index="${i}">Glisse l'étape ${i + 1} ici...</div>`
+                    ).join('')}
+                    <strong>Fin</strong>
+                </div>
+                <div class="drag-container">
+                    <h3><i class="fas fa-hand-pointer"></i> Glisse et dépose les étapes dans le bon ordre :</h3>
+                    <div class="drag-options">
+                        ${shuffledSteps.map(step => 
+                            `<div class="draggable" draggable="true" data-value="${step}">${step}</div>`
+                        ).join('')}
+                    </div>
+                </div>
+                <button class="check-button" onclick="checkAlgorithm(${quiz.id})">
+                    <i class="fas fa-check"></i> Vérifier ma solution
+                </button>
+                <div id="result${quiz.id}" class="result" style="display: none;"></div>
+            `;
+
+            document.getElementById("quiz-container").appendChild(container);
+
+            // Add drag and drop functionality
+            container.querySelectorAll('.draggable').forEach(item => {
+                item.addEventListener('dragstart', dragStart);
+                item.addEventListener('dragend', dragEnd);
+            });
+
+            container.querySelectorAll('.dropzone').forEach(zone => {
+                zone.addEventListener('dragover', dragOver);
+                zone.addEventListener('drop', dropItem);
+                zone.addEventListener('dragenter', dragEnter);
+                zone.addEventListener('dragleave', dragLeave);
+            });
+        }
+
+        function dragStart(e) {
+            e.dataTransfer.setData("text/plain", e.target.dataset.value);
+            e.target.style.opacity = '0.5';
+        }
+
+        function dragEnd(e) {
+            e.target.style.opacity = '1';
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function dragEnter(e) {
+            e.preventDefault();
+            e.target.style.transform = 'scale(1.05)';
+            e.target.style.borderColor = '#667eea';
+        }
+
+        function dragLeave(e) {
+            e.target.style.transform = 'scale(1)';
+            e.target.style.borderColor = '#9c27b0';
+        }
+
+        function dropItem(e) {
+            e.preventDefault();
+            const data = e.dataTransfer.getData("text/plain");
+            e.target.textContent = data;
+            e.target.dataset.value = data;
+            e.target.classList.add('filled');
+            e.target.style.transform = 'scale(1)';
+            
+            // Mark the draggable item as used
+            const draggables = document.querySelectorAll('.draggable');
+            draggables.forEach(item => {
+                if (item.dataset.value === data) {
+                    item.classList.add('used');
+                }
+            });
+        }
+
+        function checkAlgorithm(quizNum) {
+            const quiz = quizzes.find(q => q.id === quizNum);
+            const drops = document.querySelectorAll(`#quiz${quizNum} .dropzone`);
+            const userAnswers = Array.from(drops).map(d => d.dataset.value);
+            const correct = quiz.correctSteps;
+            const result = document.getElementById(`result${quizNum}`);
+
+            const allCorrect = userAnswers.every((ans, i) => {
+                const expected = correct[i];
+                if (Array.isArray(expected)) {
+                    return expected.includes(ans);
+                } else {
+                    return expected === ans;
+                }
+            });
+
+            result.style.display = 'block';
+
+            if (allCorrect) {
+                result.innerHTML = '<i class="fas fa-check-circle"></i> Excellent ! Tu as trouvé la bonne solution !';
+                result.className = 'result success';
+                score++;
+                currentQuiz++;
+                updateProgress();
+                
+                setTimeout(() => {
+                    document.getElementById(`quiz${quizNum}`).classList.remove("active");
+                    const next = document.getElementById(`quiz${quizNum + 1}`);
+                    if (next) {
+                        next.classList.add("active");
+                        next.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        document.getElementById("final").style.display = "block";
+                        document.getElementById("scoreDisplay").textContent = `${score} / ${quizzes.length}`;
+                        document.getElementById("final").scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 2000);
+            } else {
+                result.innerHTML = '<i class="fas fa-times-circle"></i> Pas tout à fait ! Réessaie en vérifiant l\'ordre des étapes.';
+                result.className = 'result error';
+                
+                // Reset the quiz
+                setTimeout(() => {
+                    result.style.display = 'none';
+                    drops.forEach(drop => {
+                        drop.textContent = `Glisse l'étape ${parseInt(drop.dataset.index) + 1} ici...`;
+                        drop.dataset.value = '';
+                        drop.classList.remove('filled');
+                    });
+                    
+                    document.querySelectorAll(`#quiz${quizNum} .draggable`).forEach(item => {
+                        item.classList.remove('used');
+                    });
+                }, 3000);
+            }
+        }
+
+        // Initialize the quiz
+        quizzes.forEach(q => createQuiz(q));
+        createParticles();
+        updateProgress();
+    </script>
+</body>
+</html>
